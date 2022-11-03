@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { MessageModel } from "../models/Message";
+import { BiCheckDouble, BiCheck } from "react-icons/bi";
 
 export function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -11,7 +12,12 @@ export function Message({ message }: { message: MessageModel }) {
 
   function formatMessageTimestamp(timestamp: string) {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString().slice(0, 5);
+    var time = date.toLocaleTimeString().slice(0, 7).split(":");
+    var betterTime = `${time[0]}:${time[1]} `;
+    return (
+      betterTime +
+      date.toLocaleTimeString().slice(-3, date.toLocaleTimeString().length + 1)
+    );
   }
 
   return (
@@ -40,6 +46,11 @@ export function Message({ message }: { message: MessageModel }) {
           >
             {formatMessageTimestamp(message.timestamp)}
           </span>
+          {user?.username == message.from_user.username && (
+            <div className="read">
+              {message.read ? <BiCheckDouble color="green" /> : <BiCheck />}
+            </div>
+          )}
         </div>
       </div>
     </li>

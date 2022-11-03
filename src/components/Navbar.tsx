@@ -57,22 +57,7 @@ export function Navbar() {
                   aria-current="page"
                 ></Link>
               </li>
-              <li>
-                <Link
-                  to="/conversations"
-                  className="block py-2 pr-4 pl-3 text-white md:p-0 dark:text-white"
-                  aria-current="page"
-                >
-                  Active Conversations
-                  {unreadMessageCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-white">
-                      <span className="text-xs font-medium leading-none text-gray-800">
-                        {unreadMessageCount}
-                      </span>
-                    </span>
-                  )}
-                </Link>
-              </li>
+
               <li>
                 <Link
                   to="/"
@@ -80,6 +65,13 @@ export function Navbar() {
                   aria-current="page"
                 >
                   Chats
+                  {user && unreadMessageCount > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-white">
+                      <span className="text-xs font-medium leading-none text-gray-800">
+                        {unreadMessageCount}
+                      </span>
+                    </span>
+                  )}
                 </Link>
               </li>
               {!user ? (
@@ -106,7 +98,7 @@ export function Navbar() {
           </div>
         </div>
       </nav>
-      <div className="max-w-6xl mx-auto py-6" >
+      <div className="max-w-6xl mx-auto py-6">
         <Outlet />
       </div>
     </>

@@ -66,6 +66,13 @@ function Chat() {
             setMessageHistory((prev: any) => [data.message, ...prev]);
             sendJsonMessage({ type: "read_messages" });
             break;
+          case "read_message_to_change_icon":
+            setMessageHistory((prev: any) =>
+              prev.map((item: any) =>
+                item.id === data.message ? data.message : item
+              )
+            );
+            break;
           case "user_join":
             setParticipants((pcpts: string[]) => {
               if (!pcpts.includes(data.user)) {
@@ -137,7 +144,6 @@ function Chat() {
       if (apiRes.status === 200) {
         const data: ConversationModel = await apiRes.json();
         setConversation(data);
-        console.log(conversation?.other_user.username);
       }
     }
     fetchConversation();
@@ -275,7 +281,7 @@ function Chat() {
         className={
           " mt-3 flex flex-col-reverse relative w-full border border-gray-200 overflow-y-auto p-6"
         }
-        style={{ maxHeight: "75%" }}
+        style={{ maxHeight: window.innerHeight - 250 }}
       >
         <div>
           {/* Put the scroll bar always on the bottom */}
@@ -298,7 +304,8 @@ function Chat() {
         <input
           type="text"
           placeholder="Message"
-          className="block w-full rounded-full bg-gray-100 py-2 outline-none focus:text-gray-700"
+          className="block w-full  bg-gray-100 py-2 outline-none focus:text-gray-700"
+          style={{ paddingLeft: "15px" }}
           name="message"
           value={message}
           onChange={handleChangeMessage}

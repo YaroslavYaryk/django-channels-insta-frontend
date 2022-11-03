@@ -1,9 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { FiSend } from "react-icons/fi";
 import { IconContext } from "react-icons";
 import { FaBars } from "react-icons/fa";
+import ChooseConversationPopup from "./ChooseConversationPopup";
 
 export const ConversationStart = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const togglePopup = () => {
+    console.log("here");
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div style={{}}>
       <div className="block" style={{ textAlign: "center" }}>
@@ -20,8 +28,11 @@ export const ConversationStart = () => {
         <p className="mb-7" style={{ fontWeight: "400", color: "#8C8C8C" }}>
           Send private messages to a friend.
         </p>
-        <a
+
+        <input
           className="mt-5"
+          type="button"
+          value="Send Message"
           style={{
             padding: 7,
             background: "#0195f7",
@@ -29,11 +40,10 @@ export const ConversationStart = () => {
             fontSize: "14px",
             borderRadius: "5px",
           }}
-          href=""
-        >
-          Send Message
-        </a>
+          onClick={togglePopup}
+        />
       </div>
+      {isOpen && <ChooseConversationPopup handleClose={togglePopup} />}
     </div>
   );
 };
