@@ -97,3 +97,16 @@
   max-height: 47vh;
   overflow-y: scroll
 }
+
+.iconBlockStartNewConv:hover, .startMessagePopup:hover{
+  cursor: pointer;
+}
+
+
+
+input[type="file"] {
+  display: none;
+}
+.custom-file-upload {
+  cursor: pointer;
+}

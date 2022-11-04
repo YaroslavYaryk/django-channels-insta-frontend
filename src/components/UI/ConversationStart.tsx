@@ -3,6 +3,7 @@ import { FiSend } from "react-icons/fi";
 import { IconContext } from "react-icons";
 import { FaBars } from "react-icons/fa";
 import ChooseConversationPopup from "./ChooseConversationPopup";
+import { UserModelTable } from "../../models/UserModelTable";
 
 export const ConversationStart = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +31,7 @@ export const ConversationStart = () => {
         </p>
 
         <input
-          className="mt-5"
+          className="mt-5 startMessagePopup"
           type="button"
           value="Send Message"
           style={{

@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { HOST, PORT } from "../config/server";
 import { AuthContext } from "../contexts/AuthContext";
 
 interface UserResponse {
@@ -15,7 +16,7 @@ export function Conversations() {
 
   useEffect(() => {
     async function fetchUsers() {
-      const res = await fetch("http://127.0.0.1:8000/users/api/all/", {
+      const res = await fetch(`${HOST}:${PORT}/users/api/all/`, {
         headers: {
           Authorization: `Token ${user?.token}`,
         },

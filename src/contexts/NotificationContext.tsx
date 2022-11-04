@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { JUST_HOST, PORT } from "../config/server";
 import { AuthContext } from "./AuthContext";
 
 const DefaultProps = {
@@ -22,7 +23,7 @@ export const NotificationContextProvider: React.FC<{ children: ReactNode }> = ({
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const { readyState } = useWebSocket(
-    user ? `ws://127.0.0.1:8000/notifications/` : null,
+    user ? `ws://${JUST_HOST}:${PORT}/notifications/` : null,
     {
       queryParams: {
         token: user ? user.token : "",

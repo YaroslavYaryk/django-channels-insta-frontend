@@ -1,4 +1,5 @@
 import axios from "axios";
+import { HOST, PORT } from "../config/server";
 import { UserModel } from "../models/User";
 
 class AuthService {
@@ -8,7 +9,7 @@ class AuthService {
 
   async login(username: string, password: string): Promise<UserModel> {
     const response = await axios.post(
-      "http://127.0.0.1:8000/users/api/auth/login/",
+      `${HOST}:${PORT}/users/api/auth/login/`,
 
       {
         username,

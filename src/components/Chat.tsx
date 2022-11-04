@@ -10,6 +10,12 @@ import { MessageModel } from "../models/Message";
 import { ChatLoader } from "./ChatLoader";
 import { ConversationModel } from "../models/Conversation";
 import { GoPrimitiveDot } from "react-icons/go";
+import { FiImage } from "react-icons/fi";
+import { TiTimes } from "react-icons/ti";
+import EmojiPicker from "emoji-picker-react";
+import { BsEmojiSmile } from "react-icons/bs";
+
+import { JUST_HOST, PORT } from "../config/server";
 
 function Chat() {
   const { conversationName } = useParams(); // add this
@@ -17,6 +23,8 @@ function Chat() {
   const { user } = useContext(AuthContext);
   const [welcomeMessage, setWelcomeMessage] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
+  const [fileBase64, setFileBase64] = useState<string>("");
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   const [page, setPage] = useState(2);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
@@ -35,8 +43,12 @@ function Chat() {
     }
   }
 
+  const clearImage = () => {
+    setFileBase64("");
+  };
+
   const { readyState, sendJsonMessage } = useWebSocket(
-    user ? `ws://127.0.0.1:8000/chats/${conversationName}/` : null,
+    user ? `ws://${JUST_HOST}:${PORT}/chats/${conversationName}/` : null,
     {
       queryParams: {
         token: user ? user.token : "",
@@ -57,6 +69,18 @@ function Chat() {
           case "greeting_response":
             setWelcomeMessage(data.message);
             break;
+          case "read_messages":
+            if (user?.username != data.user) {
+              var oldMessHistory = [...messageHistory];
+              oldMessHistory.map((el: MessageModel) => {
+                if (!el.read) {
+                  el.read = true;
+                }
+              });
+              setMessageHistory(oldMessHistory);
+            }
+            break;
+
           case "last_30_messages":
             console.log(data.has_more);
             setMessageHistory(data.messages);
@@ -199,19 +223,36 @@ function Chat() {
 
   function handleChangeMessage(e: any) {
     setMessage(e.target.value);
+    console.log(e.target.selectionStart);
     onType();
   }
 
   function handleSubmit() {
-    if (message.length === 0) return;
-    if (message.length > 512) return;
-    sendJsonMessage({
-      type: "chat_message",
-      message,
-    });
-    setMessage("");
-    clearTimeout(timeout.current);
-    timeoutFunction();
+    if (message.length > 0 || fileBase64.length > 0) {
+      sendJsonMessage({
+        type: "chat_message",
+        message,
+        fileBase64,
+      });
+      setMessage("");
+      setFileBase64("");
+      clearTimeout(timeout.current);
+      timeoutFunction();
+    }
+  }
+
+  function convertFile(files: FileList | null) {
+    if (files) {
+      const fileRef = files[0] || "";
+      const fileType: string = fileRef.type || "";
+      console.log("This file upload is of type:", fileType);
+      const reader = new FileReader();
+      reader.readAsBinaryString(fileRef);
+      reader.onload = (ev: any) => {
+        // convert it to base64
+        setFileBase64(`data:${fileType};base64,${btoa(ev.target.result)}`);
+      };
+    }
   }
 
   return (
@@ -281,7 +322,11 @@ function Chat() {
         className={
           " mt-3 flex flex-col-reverse relative w-full border border-gray-200 overflow-y-auto p-6"
         }
-        style={{ maxHeight: window.innerHeight - 250 }}
+        style={{
+          height: fileBase64
+            ? window.innerHeight - 310
+            : window.innerHeight - 250,
+        }}
       >
         <div>
           {/* Put the scroll bar always on the bottom */}
@@ -300,7 +345,59 @@ function Chat() {
           </InfiniteScroll>
         </div>
       </div>
+      {fileBase64 && (
+        <div
+          className="selectedImageBlock"
+          style={{
+            marginBottom: "10px",
+            border: "1px solid #B2B2B2",
+            borderRadius: "5px",
+          }}
+        >
+          <div
+            className="blockInner"
+            style={{
+              width: "50px",
+              height: "50px",
+              position: "relative",
+              padding: "5px",
+            }}
+          >
+            <img src={fileBase64} alt="" />
+            <span
+              style={{
+                position: "absolute",
+                top: -8,
+                right: -8,
+                cursor: "pointer",
+              }}
+            >
+              <TiTimes color="black" onClick={clearImage} />
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex w-full items-center justify-between border border-gray-200 p-3">
+        <div className="blockEmojiPick" style={{ position: "relative" }}>
+          <BsEmojiSmile
+            size={20}
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              setEmojiOpen(!emojiOpen);
+            }}
+          />
+          {emojiOpen && (
+            <div style={{ position: "absolute", top: -500 }}>
+              <EmojiPicker
+                height={500}
+                onEmojiClick={(event, emojiObject) => {
+                  console.log(emojiObject, event);
+                }}
+              />
+            </div>
+          )}
+        </div>
         <input
           type="text"
           placeholder="Message"
@@ -312,10 +409,40 @@ function Chat() {
           required
           ref={inputReference}
           maxLength={511}
+          onGotPointerCaptureCapture={(e) => {
+            console.log(e, "pointer capture");
+          }}
         />
-        <button className="ml-3 bg-gray-300 px-3 py-1" onClick={handleSubmit}>
-          Submit
-        </button>
+        <div
+          className="rightBlock"
+          style={{ display: "flex", alignItems: "center" }}
+        >
+          <div
+            className="imageBlock"
+            style={{
+              fontFamily: "sans-serif",
+              textAlign: "center",
+              display: "flex",
+            }}
+          >
+            <label className="custom-file-upload">
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => convertFile(e.target.files)}
+              />
+              <FiImage size={30} />
+            </label>
+          </div>
+          <button
+            className="ml-2 bg-gray-300 px-2 py-1"
+            style={{ fontSize: "14px", borderRadius: "5px" }}
+            onClick={handleSubmit}
+          >
+            Submit
+          </button>
+        </div>
       </div>
     </div>
   );

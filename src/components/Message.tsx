@@ -23,34 +23,63 @@ export function Message({ message }: { message: MessageModel }) {
   return (
     <li
       className={classNames(
-        "mt-1 mb-1 flex",
+        "mt-1 mb-3 flex",
         user!.username === message.to_user.username
           ? "justify-start"
           : "justify-end"
       )}
     >
-      <div
-        className={classNames(
-          "relative max-w-xl rounded-lg px-2 py-1 text-gray-700 shadow",
-          user!.username === message.to_user.username ? "" : "bg-gray-100"
-        )}
-      >
-        <div className="flex items-end">
-          <span className="block">{message.content}</span>
-          <span
-            className="ml-2"
+      <div className={classNames("")} style={{}}>
+        <div
+          className=""
+          style={{
+            // border: "2px solid red",
+            borderTopLeftRadius: "5px",
+            borderTopRightRadius: "5px",
+            borderBottomLeftRadius: "5px",
+            maxWidth: "250px",
+            background: "#E8E8E8",
+          }}
+        >
+          {/* <div className="imageBlock"><div/> */}
+          <div className="blockMessage">
+            <div
+              className="imageBlock"
+              style={{ maxWidth: "220px", maxHeight: "220px" }}
+            >
+              <img src={message.image} alt="" style={{ width: "100%" }} />
+            </div>
+            <div
+              className="block"
+              style={{ maxWidth: "220px", padding: "5px", minWidth: "100px" }}
+            >
+              {message.content}
+            </div>
+          </div>
+          <div
+            className="timeReadBlock"
             style={{
-              fontSize: "0.6rem",
-              lineHeight: "1rem",
+              display: "flex",
+              minWidth: "60px",
+              justifyContent: "end",
             }}
           >
-            {formatMessageTimestamp(message.timestamp)}
-          </span>
-          {user?.username == message.from_user.username && (
-            <div className="read">
-              {message.read ? <BiCheckDouble color="green" /> : <BiCheck />}
-            </div>
-          )}
+            <span
+              className="ml-2"
+              style={{
+                fontSize: "0.6rem",
+                lineHeight: "1rem",
+                // width: "100%",
+              }}
+            >
+              {formatMessageTimestamp(message.timestamp)}
+            </span>
+            {user?.username == message.from_user.username && (
+              <div className="read">
+                {message.read ? <BiCheckDouble color="green" /> : <BiCheck />}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </li>
