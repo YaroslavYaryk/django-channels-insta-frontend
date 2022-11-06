@@ -17,6 +17,34 @@ class AuthService {
       }
     );
     if (!response.data.token) {
+      console.log(response.data, "from auth");
+      throw response.data;
+      return response.data;
+    }
+    console.log(response.data);
+    this.setUserInLocalStorage(response.data);
+    return response.data;
+  }
+
+  async register(
+    firstName: string,
+    lastName: string,
+    username: string,
+    password: string
+  ): Promise<UserModel> {
+    const response = await axios.post(
+      `${HOST}:${PORT}/users/api/auth/register/`,
+
+      {
+        first_name: firstName,
+        last_name: lastName,
+        username: username,
+        password: password,
+      }
+    );
+    if (!response.data.token) {
+      console.log(response.data, "from auth");
+      throw response.data;
       return response.data;
     }
     console.log(response.data);

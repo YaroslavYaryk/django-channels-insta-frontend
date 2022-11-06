@@ -8,5 +8,5 @@ export interface MessageModel {
   content: string;
   timestamp: string;
   read: boolean;
-  image: string;
+  images: string[];
 }

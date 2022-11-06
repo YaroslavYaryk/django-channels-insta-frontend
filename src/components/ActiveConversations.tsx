@@ -59,7 +59,6 @@ export function ActiveConversations(props: Props) {
         const data = JSON.parse(e.data);
         switch (data.type) {
           case "online_user_list":
-            console.log("ggt");
             setActiveUsers(data.users);
             break;
           case "unread_messages":
@@ -67,15 +66,12 @@ export function ActiveConversations(props: Props) {
             var index = oldConversations.findIndex(
               (el) => (el.name = data.name)
             );
-            console.log(index, data.name, "index data");
             var oldConversation = oldConversations[index];
             if (oldConversation) {
               oldConversation.last_message = data.message;
               oldConversations[index] = oldConversation;
               setActiveConversations([...oldConversations]);
-              console.log(conversations, "conversations");
             }
-            console.log("unexpected here", data.user, user?.username);
             if (data.user === user?.username) {
               setUnreadMessages(JSON.parse(data.unread_messages));
             }
@@ -85,24 +81,19 @@ export function ActiveConversations(props: Props) {
             var index = oldConversations.findIndex(
               (el) => (el.name = data.name)
             );
-            console.log(index, data.name, "index data");
             var oldConversation = oldConversations[index];
             if (oldConversation) {
               oldConversation.last_message = data.message;
               oldConversations[index] = oldConversation;
               setActiveConversations([...oldConversations]);
-              console.log(conversations, "conversations");
             }
             if (data.from_user == user?.username) {
-              console.log(data.from_user == user?.username, "equal users");
               break;
             }
             var oldMessages = [...unreadMessages];
             const convName = data.name;
             var index = oldMessages.findIndex((el) => (el.name = convName));
-            console.log(unreadMessages[index], "index");
             if (index == -1) {
-              console.log("new message");
               var newElem = { name: convName, count: 1 };
               oldMessages.concat(newElem);
             } else {
@@ -110,12 +101,9 @@ export function ActiveConversations(props: Props) {
               oldElem.count += 1;
               oldMessages[index] = oldElem;
             }
-            console.log(oldMessages, "new messages");
             setUnreadMessages([...oldMessages]);
             break;
           case "user_join":
-            console.log(data.user, "login");
-
             setActiveUsers((pcpts: string[]) => {
               if (!pcpts.includes(data.user)) {
                 return [...pcpts, data.user];
@@ -251,9 +239,17 @@ export function ActiveConversations(props: Props) {
                   }}
                 >
                   <img
-                    src="/images/man.png"
+                    src={
+                      c.other_user.image
+                        ? c.other_user.image
+                        : "/images/man.png"
+                    }
                     alt=""
-                    style={{ width: "100%", height: "100%" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                    }}
                   />
                   {
                     <span
@@ -289,8 +285,10 @@ export function ActiveConversations(props: Props) {
                             {c.last_message?.content}
                           </span>
                         )
-                      ) : (
+                      ) : c.last_message?.images ? (
                         <span style={{ fontSize: "14px" }}>photo message</span>
+                      ) : (
+                        ""
                       )}
                     </p>
                     <div

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Chat from "./components/Chat";
-import { Login } from "./components/Login";
+import { Login } from "./components/Auth/Login";
 import { Navbar } from "./components/Navbar";
 import { AuthContextProvider } from "./contexts/AuthContext";
 import { NotificationContextProvider } from "./contexts/NotificationContext";

@@ -8,6 +8,7 @@ import { UserModel } from "../models/User";
 
 const DefaultProps = {
   login: () => null,
+  register: () => null,
   logout: () => null,
   authAxios: axios,
   user: null,
@@ -15,6 +16,12 @@ const DefaultProps = {
 
 export interface AuthProps {
   login: (username: string, password: string) => any;
+  register: (
+    firstName: string,
+    lastName: string,
+    username: string,
+    password: string
+  ) => any;
   logout: () => void;
   authAxios: AxiosInstance;
   user: UserModel | null;
@@ -29,7 +36,24 @@ export const AuthContextProvider: React.FC<{ children: ReactNode }> = ({
   const [user, setUser] = useState(() => AuthService.getCurrentUser());
 
   async function login(username: string, password: string) {
+    console.log("in login");
     const data = await AuthService.login(username, password);
+    setUser(data);
+    return data;
+  }
+
+  async function register(
+    firstName: string,
+    lastName: string,
+    username: string,
+    password: string
+  ) {
+    const data = await AuthService.register(
+      firstName,
+      lastName,
+      username,
+      password
+    );
     setUser(data);
     return data;
   }
@@ -63,7 +87,7 @@ export const AuthContextProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, authAxios }}>
+    <AuthContext.Provider value={{ user, login, register, logout, authAxios }}>
       {children}
     </AuthContext.Provider>
   );

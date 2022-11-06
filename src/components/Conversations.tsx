@@ -22,7 +22,6 @@ export function Conversations() {
         },
       });
       const data = await res.json();
-      console.log(data, "data");
       setUsers(data);
     }
     fetchUsers();

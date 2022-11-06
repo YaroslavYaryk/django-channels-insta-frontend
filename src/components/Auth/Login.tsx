@@ -1,7 +1,9 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../contexts/AuthContext";
+import { AuthContext } from "../../contexts/AuthContext";
+import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export function Login() {
   const navigate = useNavigate();
@@ -16,14 +18,20 @@ export function Login() {
     onSubmit: async (values, { setSubmitting }) => {
       setSubmitting(true);
       const { username, password } = values;
-      const res = await login(username, password);
-      if (res.error || res.data) {
-        if (res.data && res.data.detail) {
-          setError(res.data.detail);
-        }
-      } else {
-        navigate("/");
+
+      try {
+        const res = await login(username, password);
+      } catch (err: any) {
+        Swal.fire({
+          icon: "error",
+          text: err.response.data.message,
+        });
+        //   setError(res.data.detail);
+        console.log(err);
+        return;
       }
+
+      navigate("/");
       setSubmitting(false);
     },
   });
@@ -56,7 +64,6 @@ export function Login() {
             Sign in to your account
           </h1>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={formik.handleSubmit}>
           {error && <div>{JSON.stringify(error)}</div>}
 
@@ -86,6 +93,16 @@ export function Login() {
             {formik.isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
+        <div className="registerLogin">
+          <p>
+            Already have an account?{" "}
+            <Link to={"/registration/"}>
+              <span style={{ color: "blue", marginLeft: "10px" }}>
+                Register
+              </span>
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

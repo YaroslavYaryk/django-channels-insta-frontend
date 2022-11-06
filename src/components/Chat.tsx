@@ -12,10 +12,31 @@ import { ConversationModel } from "../models/Conversation";
 import { GoPrimitiveDot } from "react-icons/go";
 import { FiImage } from "react-icons/fi";
 import { TiTimes } from "react-icons/ti";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
+
 import { BsEmojiSmile } from "react-icons/bs";
 
 import { JUST_HOST, PORT } from "../config/server";
+
+// ES6 Modules or TypeScript
+import Swal from "sweetalert2";
+
+function useRunAfterUpdate() {
+  const afterPaintRef = React.useRef<any>(null);
+  React.useLayoutEffect(() => {
+    if (afterPaintRef.current) {
+      afterPaintRef.current();
+      afterPaintRef.current = null;
+    }
+  });
+  const runAfterUpdate = (fn: any) => (afterPaintRef.current = fn);
+  return runAfterUpdate;
+}
+
+type FileBase64 = {
+  id: number;
+  url: string;
+};
 
 function Chat() {
   const { conversationName } = useParams(); // add this
@@ -23,7 +44,7 @@ function Chat() {
   const { user } = useContext(AuthContext);
   const [welcomeMessage, setWelcomeMessage] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
-  const [fileBase64, setFileBase64] = useState<string>("");
+  const [filesBase64, setFilesBase64] = useState<FileBase64[]>([]);
   const [emojiOpen, setEmojiOpen] = useState(false);
 
   const [page, setPage] = useState(2);
@@ -37,14 +58,18 @@ function Chat() {
   const [typing, setTyping] = useState(false);
   const timeout = useRef<any>();
 
+  const runAfterUpdate = useRunAfterUpdate();
+
   function updateTyping(event: { user: string; typing: boolean }) {
     if (event.user !== user!.username) {
       setTyping(event.typing);
     }
   }
 
-  const clearImage = () => {
-    setFileBase64("");
+  const clearImage = (id: number) => {
+    // setFfilesBase64();
+    console.log(filesBase64, id);
+    setFilesBase64((old) => old.filter((el) => el.id !== id));
   };
 
   const { readyState, sendJsonMessage } = useWebSocket(
@@ -82,7 +107,6 @@ function Chat() {
             break;
 
           case "last_30_messages":
-            console.log(data.has_more);
             setMessageHistory(data.messages);
             setHasMoreMessages(data.has_more);
             break;
@@ -222,38 +246,76 @@ function Chat() {
   }, [inputReference]);
 
   function handleChangeMessage(e: any) {
+    console.log("on change");
     setMessage(e.target.value);
-    console.log(e.target.selectionStart);
     onType();
   }
 
   function handleSubmit() {
-    if (message.length > 0 || fileBase64.length > 0) {
+    if (message.length > 0 || filesBase64.length > 0) {
       sendJsonMessage({
         type: "chat_message",
         message,
-        fileBase64,
+        filesBase64: filesBase64,
       });
       setMessage("");
-      setFileBase64("");
+      setFilesBase64([]);
       clearTimeout(timeout.current);
       timeoutFunction();
     }
   }
 
   function convertFile(files: FileList | null) {
+    if (files?.length && files.length > 4) {
+      Swal.fire({
+        icon: "error",
+        text: "You cant attach more than 4 pictures",
+      });
+      return;
+    }
+    var pictures: FileBase64[] = [];
     if (files) {
-      const fileRef = files[0] || "";
-      const fileType: string = fileRef.type || "";
-      console.log("This file upload is of type:", fileType);
-      const reader = new FileReader();
-      reader.readAsBinaryString(fileRef);
-      reader.onload = (ev: any) => {
-        // convert it to base64
-        setFileBase64(`data:${fileType};base64,${btoa(ev.target.result)}`);
-      };
+      for (var i = 0; i < files.length; i++) {
+        const fileRef = files[i] || "";
+        const fileType: string = fileRef.type || "";
+        const reader = new FileReader();
+        reader.readAsBinaryString(fileRef);
+        reader.onload = (ev: any) => {
+          // convert it to base64
+          pictures.push({
+            id: Math.random() + Math.random() + Math.random(),
+            url: `data:${fileType};base64,${btoa(ev.target.result)}`,
+          });
+          setFilesBase64([...pictures]);
+        };
+      }
     }
   }
+
+  const handleChoseEmoji = (emoji: any, event: MouseEvent) => {
+    var start = inputReference.current.selectionStart;
+    var end = inputReference.current.selectionStart;
+
+    if (
+      inputReference.current.selectionStart ==
+      inputReference.current.selectionEnd
+    ) {
+      setMessage(
+        `${message.slice(0, start)}${emoji.emoji}${message.slice(start)}`
+      );
+    } else {
+      setMessage(
+        `${message.slice(0, start)}${emoji.emoji}${message.slice(end)}`
+      );
+    }
+
+    runAfterUpdate(() => {
+      inputReference.current.selectionStart = end + 2;
+      inputReference.current.selectionEnd = end + 2;
+    });
+
+    inputReference.current.focus();
+  };
 
   return (
     <div style={{ height: window.innerHeight - 100 }}>
@@ -282,9 +344,13 @@ function Chat() {
                 style={{ height: "30px", width: "30px", position: "relative" }}
               >
                 <img
-                  src="/images/man.png"
+                  src={
+                    conversation.other_user.image
+                      ? conversation.other_user.image
+                      : "/images/man.png"
+                  }
                   alt=""
-                  style={{ width: "100%", height: "100%" }}
+                  style={{ width: "100%", height: "100%", borderRadius: "50%" }}
                 />
                 <span
                   className=""
@@ -323,9 +389,10 @@ function Chat() {
           " mt-3 flex flex-col-reverse relative w-full border border-gray-200 overflow-y-auto p-6"
         }
         style={{
-          height: fileBase64
-            ? window.innerHeight - 310
-            : window.innerHeight - 250,
+          height:
+            filesBase64.length > 0
+              ? window.innerHeight - 310
+              : window.innerHeight - 250,
         }}
       >
         <div>
@@ -345,7 +412,7 @@ function Chat() {
           </InfiniteScroll>
         </div>
       </div>
-      {fileBase64 && (
+      {filesBase64.length > 0 && (
         <div
           className="selectedImageBlock"
           style={{
@@ -354,26 +421,41 @@ function Chat() {
             borderRadius: "5px",
           }}
         >
-          <div
-            className="blockInner"
-            style={{
-              width: "50px",
-              height: "50px",
-              position: "relative",
-              padding: "5px",
-            }}
-          >
-            <img src={fileBase64} alt="" />
-            <span
-              style={{
-                position: "absolute",
-                top: -8,
-                right: -8,
-                cursor: "pointer",
-              }}
-            >
-              <TiTimes color="black" onClick={clearImage} />
-            </span>
+          <div className="blockInner" style={{ display: "flex", gap: "10px" }}>
+            {filesBase64.map((el) => (
+              <div
+                className="block"
+                key={el.id}
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  position: "relative",
+                  padding: "5px",
+                }}
+              >
+                <img
+                  src={el.url}
+                  className="pickedMessageImage"
+                  alt=""
+                  style={{ height: "100%", width: "100%" }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -8,
+                    right: -8,
+                    cursor: "pointer",
+                  }}
+                >
+                  <TiTimes
+                    color="black"
+                    onClick={() => {
+                      clearImage(el.id);
+                    }}
+                  />
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -384,15 +466,18 @@ function Chat() {
             size={20}
             style={{ cursor: "pointer" }}
             onClick={() => {
+              inputReference.current.focus();
               setEmojiOpen(!emojiOpen);
+              inputReference.current.focus();
             }}
           />
           {emojiOpen && (
             <div style={{ position: "absolute", top: -500 }}>
               <EmojiPicker
                 height={500}
-                onEmojiClick={(event, emojiObject) => {
-                  console.log(emojiObject, event);
+                emojiStyle={EmojiStyle.GOOGLE}
+                onEmojiClick={(emojiObject, event) => {
+                  handleChoseEmoji(emojiObject, event);
                 }}
               />
             </div>
@@ -402,15 +487,17 @@ function Chat() {
           type="text"
           placeholder="Message"
           className="block w-full  bg-gray-100 py-2 outline-none focus:text-gray-700"
+          key="message"
           style={{ paddingLeft: "15px" }}
           name="message"
           value={message}
           onChange={handleChangeMessage}
           required
+          autoFocus
           ref={inputReference}
           maxLength={511}
-          onGotPointerCaptureCapture={(e) => {
-            console.log(e, "pointer capture");
+          onPaste={(e) => {
+            console.log(e.clipboardData);
           }}
         />
         <div
@@ -430,6 +517,7 @@ function Chat() {
                 type="file"
                 accept="image/*"
                 style={{ display: "none" }}
+                multiple
                 onChange={(e) => convertFile(e.target.files)}
               />
               <FiImage size={30} />

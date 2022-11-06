@@ -110,3 +110,14 @@ input[type="file"] {
 .custom-file-upload {
   cursor: pointer;
 }
+
+.messageImage{
+  object-fit: cover;
+}
+
+.pickedMessageImage{
+  object-fit: contain;
+  
+}
+
+
