@@ -8,8 +8,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { BiCheckDouble, BiCheck } from "react-icons/bi";
 import { FaRegEdit } from "react-icons/fa";
 
-import { MessageModel } from "../models/Message";
-import { ChatLoader } from "./ChatLoader";
+import { formatMessageTimestamp } from "../services/TimeServices";
 import { GoPrimitiveDot } from "react-icons/go";
 
 import { AuthContext } from "../contexts/AuthContext";
@@ -74,6 +73,18 @@ export function ActiveConversations(props: Props) {
             }
             if (data.user === user?.username) {
               setUnreadMessages(JSON.parse(data.unread_messages));
+            }
+            break;
+          case "change_last_message":
+            var oldConversations = [...conversations];
+            var index = oldConversations.findIndex(
+              (el) => (el.name = data.name)
+            );
+            var oldConversation = oldConversations[index];
+            if (oldConversation) {
+              oldConversation.last_message = data.message;
+              oldConversations[index] = oldConversation;
+              setActiveConversations([...oldConversations]);
             }
             break;
           case "new_unread_message":
@@ -154,18 +165,6 @@ export function ActiveConversations(props: Props) {
   function createConversationName(username: string) {
     const namesAlph = [user?.username, username].sort();
     return `${namesAlph[0]}__${namesAlph[1]}`;
-  }
-
-  function formatMessageTimestamp(timestamp?: string) {
-    if (!timestamp) return;
-    const date = new Date(timestamp);
-    // return date.toLocaleTimeString().slice(0, 12);
-    var time = date.toLocaleTimeString().slice(0, 7).split(":");
-    var betterTime = `${time[0]}:${time[1]} `;
-    return (
-      betterTime +
-      date.toLocaleTimeString().slice(-3, date.toLocaleTimeString().length + 1)
-    );
   }
 
   return (

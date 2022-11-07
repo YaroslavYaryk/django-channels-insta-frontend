@@ -31,7 +31,7 @@ export const ConversationStart = () => {
         </p>
 
         <input
-          className="mt-5 startMessagePopup"
+          className="mt-0 startMessagePopup"
           type="button"
           value="Send Message"
           style={{

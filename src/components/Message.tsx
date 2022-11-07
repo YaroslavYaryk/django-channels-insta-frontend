@@ -4,50 +4,28 @@ import { MessageModel } from "../models/Message";
 import { BiCheckDouble, BiCheck } from "react-icons/bi";
 import Modal from "react-modal";
 import Lightbox, { ImagesListType } from "react-spring-lightbox";
+import { formatMessageTimestamp } from "../services/TimeServices";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 export function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
 }
 
-const customStyles = {
-  content: {
-    top: "50%",
-    left: "50%",
-    right: "auto",
-    bottom: "auto",
-    marginRight: "-50%",
-    // heigth: "50%",
-    // width: "50%",
-    transform: "translate(-50%, -50%)",
-    padding: "0px",
-  },
-};
-
-// {position: "absolute",
-// border: "1px solid #ccc",
-// background: "#fff",
-// overflow: "auto",
-// WebkitOverflowScrolling: "touch",
-// borderRadius: "4px",
-// outline: "none",
-// padding: "20px",
-// width: "50%",}
-
-export function Message({ message }: { message: MessageModel }) {
+export function Message({
+  message,
+  deleteMessage,
+  editMessage,
+}: {
+  message: MessageModel;
+  deleteMessage: (id: string) => void;
+  editMessage: (id: string) => void;
+}) {
   const { user } = useContext(AuthContext);
+  const [hoverOpen, setHoverOpen] = useState(false);
 
   const [isOpen, setIsopen] = useState(false);
+  const [messageOptionsOpen, setMessageOptionsOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
-
-  function formatMessageTimestamp(timestamp: string) {
-    const date = new Date(timestamp);
-    var time = date.toLocaleTimeString().slice(0, 7).split(":");
-    var betterTime = `${time[0]}:${time[1]} `;
-    return (
-      betterTime +
-      date.toLocaleTimeString().slice(-3, date.toLocaleTimeString().length + 1)
-    );
-  }
 
   return (
     <li
@@ -58,7 +36,121 @@ export function Message({ message }: { message: MessageModel }) {
           : "justify-end"
       )}
     >
-      <div className={classNames("")} style={{}}>
+      <div
+        className={classNames("")}
+        onMouseEnter={() => {
+          if (!messageOptionsOpen) {
+            setHoverOpen(!hoverOpen);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!messageOptionsOpen) {
+            setHoverOpen(!hoverOpen);
+          }
+        }}
+        style={{
+          paddingLeft: user!.username !== message.to_user.username ? "30px" : 0,
+          paddingRight:
+            user!.username === message.to_user.username ? "30px" : 0,
+          position: "relative",
+        }}
+      >
+        {hoverOpen &&
+          (user!.username !== message.to_user.username ? (
+            <span
+              className="imageDots"
+              style={{ position: "absolute", bottom: 0, left: 0 }}
+            >
+              <BsThreeDotsVertical
+                onClick={() => {
+                  setMessageOptionsOpen(!messageOptionsOpen);
+                }}
+              />
+            </span>
+          ) : (
+            <span
+              className="imageDots"
+              style={{ position: "absolute", bottom: 0, right: 0 }}
+            >
+              <BsThreeDotsVertical
+                onClick={() => {
+                  setMessageOptionsOpen(!messageOptionsOpen);
+                }}
+              />
+            </span>
+          ))}
+        {messageOptionsOpen &&
+          (user!.username !== message.to_user.username ? (
+            <div
+              className="messageOptionsOpen"
+              style={{
+                position: "absolute",
+                bottom: 30,
+                left: -100,
+                height: "60px",
+                width: "100px",
+              }}
+            >
+              <ul
+                style={{
+                  fontSize: "13px",
+                  border: "1px solid #B7B2B2",
+                  padding: "5px",
+                  borderTopRightRadius: "10px",
+                  borderTopLeftRadius: "10px",
+                  borderBottomLeftRadius: "10px",
+                }}
+              >
+                <li className="imageOption">Reply</li>
+                <li
+                  className="imageOption"
+                  onClick={() => {
+                    editMessage(message.id);
+                    setHoverOpen(false);
+                    setMessageOptionsOpen(false);
+                  }}
+                >
+                  Edit
+                </li>
+                <li
+                  onClick={() => {
+                    deleteMessage(message.id);
+                    setHoverOpen(false);
+                    setMessageOptionsOpen(false);
+                  }}
+                  className="imageOption"
+                >
+                  Delete
+                </li>
+              </ul>
+            </div>
+          ) : (
+            <div
+              className="messageOptionsOpen"
+              style={{
+                position: "absolute",
+                bottom: 30,
+                right: -100,
+                height: "60px",
+                width: "100px",
+              }}
+            >
+              <ul
+                style={{
+                  fontSize: "13px",
+                  border: "1px solid #B7B2B2",
+                  padding: "5px",
+                  borderTopRightRadius: "10px",
+                  borderTopLeftRadius: "10px",
+                  borderBottomRightRadius: "10px",
+                }}
+              >
+                <li className="imageOption">Reply</li>
+                <li className="imageOption">Like</li>
+              </ul>
+            </div>
+          ))}
+
         <div
           className=""
           style={{

@@ -3,6 +3,7 @@ import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import Swal from "sweetalert2";
+import { Link } from "react-router-dom";
 
 export function Register() {
   const navigate = useNavigate();
@@ -43,146 +44,96 @@ export function Register() {
   }, [user]);
 
   return (
-    <>
-      <span id="root">
-        <section className="section-all">
-          {/* 1-Role Main */}
-          <main className="main" role="main">
-            <div className="wrapper">
-              <article className="article">
-                <div className="content">
-                  <div className="login-box">
-                    <div className="header">
-                      <img
-                        className="logo"
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Instagram_logo.svg/1200px-Instagram_logo.svg.png"
-                        alt="Instagram"
-                      />
-                    </div>
-                    {/* Header end */}
-                    <div className="form-wrap">
-                      <form className="form">
-                        <div className="input-box">
-                          <input
-                            type="text"
-                            id="name"
-                            aria-describedby=""
-                            placeholder="Phone number, username, or email"
-                            aria-required="true"
-                            maxLength={30}
-                            autoCapitalize="off"
-                            autoCorrect="off"
-                            name="username"
-                            defaultValue=""
-                            required
-                          />
-                        </div>
-                        <div className="input-box">
-                          <input
-                            type="password"
-                            name="password"
-                            id="password"
-                            placeholder="Password"
-                            aria-describedby=""
-                            maxLength={30}
-                            aria-required="true"
-                            autoCapitalize="off"
-                            autoCorrect="off"
-                            required
-                          />
-                        </div>
-                        <span className="button-box">
-                          <button className="btn" type="submit" name="submit">
-                            Log in
-                          </button>
-                        </span>
-                        <a className="forgot" href="">
-                          Forgot password?
-                        </a>
-                      </form>
-                    </div>{" "}
-                    {/* Form-wrap end */}
-                  </div>{" "}
-                  {/* Login-box end */}
-                  <div className="login-box">
-                    <p className="text">
-                      Don't have an account?<a href="#">Sign up</a>
-                    </p>
-                  </div>{" "}
-                  {/* Signup-box end */}
-                  <div className="app">
-                    <p>Get the app.</p>
-                    <div className="app-img">
-                      <a href="https://itunes.apple.com/app/instagram/id389801252?pt=428156&ct=igweb.loginPage.badge&mt=8">
-                        <img src="https://www.instagram.com/static/images/appstore-install-badges/badge_ios_english-en.png/4b70f6fae447.png" />
-                      </a>
-                      <a href="https://play.google.com/store/apps/details?id=com.instagram.android&referrer=utm_source%3Dinstagramweb%26utm_campaign%3DloginPage%26utm_medium%3Dbadge">
-                        <img src="https://www.instagram.com/static/images/appstore-install-badges/badge_android_english-en.png/f06b908907d5.png" />
-                      </a>
-                    </div>{" "}
-                    {/* App-img end*/}
-                  </div>{" "}
-                  {/* App end */}
-                </div>{" "}
-                {/* Content end */}
-              </article>
-            </div>{" "}
-            {/* Wrapper end */}
-          </main>
-          {/* 2-Role Footer */}
-          <footer className="footer" role="contentinfo">
-            <div className="footer-container">
-              <nav className="footer-nav" role="navigation">
-                <ul>
-                  <li>
-                    <a href="">About Us</a>
-                  </li>
-                  <li>
-                    <a href="">Support</a>
-                  </li>
-                  <li>
-                    <a href="">Blog</a>
-                  </li>
-                  <li>
-                    <a href="">Press</a>
-                  </li>
-                  <li>
-                    <a href="">Api</a>
-                  </li>
-                  <li>
-                    <a href="">Jobs</a>
-                  </li>
-                  <li>
-                    <a href="">Privacy</a>
-                  </li>
-                  <li>
-                    <a href="">Terms</a>
-                  </li>
-                  <li>
-                    <a href="">Directory</a>
-                  </li>
-                  <li>
-                    <span className="language">
-                      Language
-                      <select name="language" className="select">
-                        <option value="#">English</option>
-                        <option value="http://ru-instafollow.bitballoon.com">
-                          Russian
-                        </option>
-                      </select>
-                    </span>
-                  </li>
-                </ul>
-              </nav>
-              <span className="footer-logo">© 2018 Instagram</span>
-            </div>{" "}
-            {/* Footer container end */}
-          </footer>
-        </section>
-      </span>{" "}
-      {/* Root */}
-      {/* Select Link */}
-    </>
+    <div className="container-register">
+      <div className="box-register">
+        <div className="heading" />
+        <form className="login-form" onSubmit={formik.handleSubmit}>
+          <div className="field">
+            <input
+              name="firstName"
+              placeholder="First Name"
+              value={formik.values.firstName}
+              onChange={formik.handleChange}
+              type="text"
+            />
+          </div>
+          <div className="field">
+            <input
+              name="lastName"
+              placeholder="Last Name"
+              value={formik.values.lastName}
+              onChange={formik.handleChange}
+              type="text"
+            />
+          </div>
+          <div className="field">
+            <input
+              name="username"
+              placeholder="Username"
+              value={formik.values.username}
+              onChange={formik.handleChange}
+              type="text"
+            />
+          </div>
+          <div className="field">
+            <input
+              name="password"
+              type="password"
+              placeholder="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+            />
+          </div>
+          <button className="login-button" title="login">
+            Sign Up
+          </button>
+          <div className="separator">
+            <div className="line" />
+            <p>OR</p>
+            <div className="line" />
+          </div>
+          <div className="other">
+            <button className="fb-login-btn" type="button">
+              <i className="fa fa-facebook-official fb-icon" />
+              <span className="">Log in with Facebook</span>
+            </button>
+          </div>
+        </form>
+      </div>
+      <div className="mini-box">
+        <div className="text">
+          Already have an account?{" "}
+          <Link to={"/login/"}>
+            {" "}
+            <span style={{ color: "#5b9af7" }}>Sign In</span>{" "}
+          </Link>
+        </div>
+      </div>
+      <footer style={{ width: "100%" }}>
+        <ul style={{ width: "100%" }}>
+          <li>About</li>
+          <li>Blog</li>
+          <li>Jobs</li>
+          <li>Help</li>
+          <li>API</li>
+          <li>Privacy</li>
+          <li>Terms</li>
+          <li>Top Accounts</li>
+          <li>Hashtags</li>
+          <li>Locations</li>
+        </ul>
+        <div className="copyright">
+          <select aria-label="Switch Display Language">
+            <option value="en">English</option>
+
+            <option value="pl">Polski</option>
+
+            <option value="uk">Українська</option>
+          </select>
+          <span> © 2021 Instagram from Facebook </span>
+        </div>
+      </footer>
+    </div>
 
     // <div
     //   style={{

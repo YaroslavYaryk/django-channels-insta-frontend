@@ -8,6 +8,7 @@ import { NotificationContextProvider } from "./contexts/NotificationContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ConversationChat } from "./components/ConversationChat";
 import { ActiveConversationsStart } from "./components/ActiveConversationsStart";
+import { Register } from "./components/Auth/Register";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
             }
           />
           <Route path="login" element={<Login />} />
+          <Route path="registration" element={<Register />} />
         </Route>
       </Routes>
     </BrowserRouter>

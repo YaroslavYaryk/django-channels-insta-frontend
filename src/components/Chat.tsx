@@ -18,6 +18,8 @@ import { BsEmojiSmile } from "react-icons/bs";
 
 import { JUST_HOST, PORT } from "../config/server";
 
+import { formatMessageTimestamp } from "../services/TimeServices";
+
 // ES6 Modules or TypeScript
 import Swal from "sweetalert2";
 
@@ -47,6 +49,9 @@ function Chat() {
   const [filesBase64, setFilesBase64] = useState<FileBase64[]>([]);
   const [emojiOpen, setEmojiOpen] = useState(false);
 
+  const [isEdit, setIsEdit] = useState(false);
+  const [editedId, setEditedId] = useState("");
+
   const [page, setPage] = useState(2);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [message, setMessage] = useState("");
@@ -57,7 +62,7 @@ function Chat() {
   const [meTyping, setMeTyping] = useState(false);
   const [typing, setTyping] = useState(false);
   const timeout = useRef<any>();
-
+  const [query, setQuery] = useState(0);
   const runAfterUpdate = useRunAfterUpdate();
 
   function updateTyping(event: { user: string; typing: boolean }) {
@@ -105,7 +110,22 @@ function Chat() {
               setMessageHistory(oldMessHistory);
             }
             break;
+          case "delete_message":
+            setMessageHistory((prev: any) =>
+              prev.filter((el: any) => el.id !== data.message_id)
+            );
+            break;
 
+          case "edit_message":
+            console.log("here");
+            var oldMessages = [...messageHistory];
+            var index = oldMessages.findIndex(
+              (el) => (el.id = data.message.id)
+            );
+            console.log(data.message);
+            oldMessages[index] = data.message;
+            setMessageHistory([...oldMessages]);
+            break;
           case "last_30_messages":
             setMessageHistory(data.messages);
             setHasMoreMessages(data.has_more);
@@ -128,12 +148,19 @@ function Chat() {
               }
               return pcpts;
             });
+
             break;
           case "user_leave":
             setParticipants((pcpts: string[]) => {
               const newPcpts = pcpts.filter((x) => x !== data.user);
+
               return newPcpts;
             });
+            setQuery(Math.random() + Math.random() + Math.random());
+            // var oldConversation:ConversationModel = {...conversation}
+            // oldConversation.other_user = data.updated_user
+            // setConversation({...oldConversation})
+
             break;
           case "online_user_list":
             setParticipants(data.users);
@@ -195,7 +222,7 @@ function Chat() {
       }
     }
     fetchConversation();
-  }, [conversationName, user]);
+  }, [conversationName, user, query]);
 
   function timeoutFunction() {
     setMeTyping(false);
@@ -253,17 +280,53 @@ function Chat() {
 
   function handleSubmit() {
     if (message.length > 0 || filesBase64.length > 0) {
-      sendJsonMessage({
-        type: "chat_message",
-        message,
-        filesBase64: filesBase64,
-      });
+      if (isEdit) {
+        sendJsonMessage({
+          type: "edit_message",
+          messageId: editedId,
+          message: message,
+          filesBase64: filesBase64,
+        });
+      } else {
+        sendJsonMessage({
+          type: "chat_message",
+          message,
+          filesBase64: filesBase64,
+        });
+      }
       setMessage("");
       setFilesBase64([]);
       clearTimeout(timeout.current);
       timeoutFunction();
     }
   }
+
+  const deleteMessage = (messageId: string) => {
+    sendJsonMessage({
+      type: "delete_message",
+      messageId,
+    });
+  };
+
+  const editMessage = (messageId: string) => {
+    setIsEdit(true);
+    setEditedId(messageId);
+    var message: MessageModel = messageHistory.find(
+      (el: any) => el.id === messageId
+    );
+    console.log(message.images);
+    setMessage(message.content);
+    setFilesBase64(
+      message.images.map((el) => ({
+        url: el,
+        id: Math.random() + Math.random(),
+      }))
+    );
+    // sendJsonMessage({
+    //   type: "edit",
+    //   messageId,
+    // });
+  };
 
   function convertFile(files: FileList | null) {
     if (files?.length && files.length > 4) {
@@ -369,6 +432,18 @@ function Chat() {
               </div>
               <h3 className=" font-semibold text-gray-900" style={{}}>
                 {conversation.other_user.username}
+                {!participants.includes(conversation.other_user.username) && (
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "10px",
+                      fontWeight: "400",
+                    }}
+                  >
+                    Seen at{" "}
+                    {formatMessageTimestamp(conversation.other_user.last_login)}
+                  </span>
+                )}
               </h3>
             </div>
             {typing && (
@@ -407,7 +482,12 @@ function Chat() {
             scrollableTarget="scrollableDiv"
           >
             {messageHistory.map((message: MessageModel) => (
-              <Message key={message.id} message={message} />
+              <Message
+                key={message.id}
+                message={message}
+                deleteMessage={deleteMessage}
+                editMessage={editMessage}
+              />
             ))}
           </InfiniteScroll>
         </div>

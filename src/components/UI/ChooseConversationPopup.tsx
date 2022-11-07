@@ -36,7 +36,7 @@ const ChooseConversationPopup = (props: Props) => {
 
   return (
     <div className="popup-box">
-      <div className="box">
+      <div className="box" style={{ width: window.innerWidth * 0.3 }}>
         <div className="header">
           <p className="popHeaderTitle">New message</p>
           <span className="close-icon" onClick={props.handleClose}>
