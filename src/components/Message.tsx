@@ -6,6 +6,10 @@ import Modal from "react-modal";
 import Lightbox, { ImagesListType } from "react-spring-lightbox";
 import { formatMessageTimestamp } from "../services/TimeServices";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { AiTwotoneHeart } from "react-icons/ai";
+import { MessageLike } from "../models/MessageLike";
+import { TbMinusVertical } from "react-icons/tb";
+import { spawn } from "child_process";
 
 export function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -15,10 +19,16 @@ export function Message({
   message,
   deleteMessage,
   editMessage,
+  likeMessage,
+  getMessageById,
+  replyMessage,
 }: {
   message: MessageModel;
   deleteMessage: (id: string) => void;
   editMessage: (id: string) => void;
+  likeMessage: (id: string) => void;
+  replyMessage: (id: string) => void;
+  getMessageById: (id: string) => MessageModel;
 }) {
   const { user } = useContext(AuthContext);
   const [hoverOpen, setHoverOpen] = useState(false);
@@ -30,7 +40,7 @@ export function Message({
   return (
     <li
       className={classNames(
-        "mt-1 mb-3 flex",
+        "mt-1 mb-5 flex",
         user!.username === message.to_user.username
           ? "justify-start"
           : "justify-end"
@@ -54,7 +64,62 @@ export function Message({
             user!.username === message.to_user.username ? "30px" : 0,
           position: "relative",
         }}
+        onDoubleClick={() => {
+          likeMessage(message.id);
+          setHoverOpen(false);
+          setMessageOptionsOpen(false);
+        }}
       >
+        {message.parent && (
+          <div
+            className="replyBlock mb-2"
+            style={{
+              display: "flex",
+
+              justifyContent: "flex-end",
+            }}
+          >
+            <div
+              className="replyBlockInner"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                maxWidth: "90%",
+                // minWidth: "40%",
+                marginLeft: "20px",
+                justifyContent: "flex-start",
+              }}
+            >
+              <TbMinusVertical size={40} />
+              {getMessageById(message.parent).content ? (
+                <div>
+                  {getMessageById(message.parent)?.content.length > 15
+                    ? `${getMessageById(message.parent)?.content.slice(
+                        0,
+                        16
+                      )}...`
+                    : getMessageById(message.parent)?.content}
+                </div>
+              ) : (
+                <div
+                  className="imagesBlock"
+                  style={{ display: "flex", gap: "10px", alignItems: "center" }}
+                >
+                  {getMessageById(message.parent!)?.images.map((el: string) => (
+                    <div key={el} style={{ width: "30px", height: "30px" }}>
+                      <img
+                        style={{ height: "100%", width: "100%" }}
+                        className="pickedMessageImage"
+                        src={el}
+                        alt=""
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {hoverOpen &&
           (user!.username !== message.to_user.username ? (
             <span
@@ -101,7 +166,16 @@ export function Message({
                   borderBottomLeftRadius: "10px",
                 }}
               >
-                <li className="imageOption">Reply</li>
+                <li
+                  className="imageOption"
+                  onClick={() => {
+                    replyMessage(message.id);
+                    setHoverOpen(false);
+                    setMessageOptionsOpen(false);
+                  }}
+                >
+                  Reply
+                </li>
                 <li
                   className="imageOption"
                   onClick={() => {
@@ -146,7 +220,16 @@ export function Message({
                 }}
               >
                 <li className="imageOption">Reply</li>
-                <li className="imageOption">Like</li>
+                <li
+                  onClick={() => {
+                    likeMessage(message.id);
+                    setHoverOpen(false);
+                    setMessageOptionsOpen(false);
+                  }}
+                  className="imageOption"
+                >
+                  Like
+                </li>
               </ul>
             </div>
           ))}
@@ -219,6 +302,9 @@ export function Message({
                 // width: "100%",
               }}
             >
+              {message.edited && (
+                <span style={{ marginRight: "5px" }}>Edited</span>
+              )}
               {formatMessageTimestamp(message.timestamp)}
             </span>
             {user?.username == message.from_user.username && (
@@ -227,6 +313,26 @@ export function Message({
               </div>
             )}
           </div>
+
+          {message.likes.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: -10,
+                left: user?.username !== message.from_user.username ? 0 : 30,
+              }}
+            >
+              <div style={{ display: "flex" }}>
+                {message.likes.map((el: MessageLike) => (
+                  <AiTwotoneHeart
+                    key={el.message + el.user}
+                    style={{ cursor: "pointer" }}
+                    color="red"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {/* <Modal

@@ -5,6 +5,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { useParams } from "react-router-dom";
 import { Message } from "./Message";
 import { useHotkeys } from "react-hotkeys-hook";
+import { TbMinusVertical } from "react-icons/tb";
 
 import { MessageModel } from "../models/Message";
 import { ChatLoader } from "./ChatLoader";
@@ -12,6 +13,7 @@ import { ConversationModel } from "../models/Conversation";
 import { GoPrimitiveDot } from "react-icons/go";
 import { FiImage } from "react-icons/fi";
 import { TiTimes } from "react-icons/ti";
+import { BsFillReplyFill } from "react-icons/bs";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 
 import { BsEmojiSmile } from "react-icons/bs";
@@ -22,6 +24,7 @@ import { formatMessageTimestamp } from "../services/TimeServices";
 
 // ES6 Modules or TypeScript
 import Swal from "sweetalert2";
+import { MessageLike } from "../models/MessageLike";
 
 function useRunAfterUpdate() {
   const afterPaintRef = React.useRef<any>(null);
@@ -50,7 +53,7 @@ function Chat() {
   const [emojiOpen, setEmojiOpen] = useState(false);
 
   const [isEdit, setIsEdit] = useState(false);
-  const [editedId, setEditedId] = useState("");
+  const [editedId, setEditedId] = useState<string | null>("");
 
   const [page, setPage] = useState(2);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
@@ -63,6 +66,9 @@ function Chat() {
   const [typing, setTyping] = useState(false);
   const timeout = useRef<any>();
   const [query, setQuery] = useState(0);
+  const [isReply, setIsReply] = useState(false);
+  const [repliedMessageId, setRepliedMessageId] = useState<string | null>("");
+
   const runAfterUpdate = useRunAfterUpdate();
 
   function updateTyping(event: { user: string; typing: boolean }) {
@@ -120,12 +126,26 @@ function Chat() {
             console.log("here");
             var oldMessages = [...messageHistory];
             var index = oldMessages.findIndex(
-              (el) => (el.id = data.message.id)
+              (el) => el.id === data.message.id
             );
             console.log(data.message);
             oldMessages[index] = data.message;
             setMessageHistory([...oldMessages]);
             break;
+
+          case "message_like":
+            var oldMessages = [...messageHistory];
+            var index = oldMessages.findIndex(
+              (el) => el.id === data.message_id
+            );
+            console.log(data, "hre is data");
+            var oldMessage: MessageModel = oldMessages[index];
+            console.log(oldMessage);
+            oldMessage.likes = data.message_likes;
+            oldMessages[index] = oldMessage;
+            setMessageHistory(oldMessages);
+            break;
+
           case "last_30_messages":
             setMessageHistory(data.messages);
             setHasMoreMessages(data.has_more);
@@ -292,12 +312,17 @@ function Chat() {
           type: "chat_message",
           message,
           filesBase64: filesBase64,
+          parent: repliedMessageId,
         });
       }
       setMessage("");
       setFilesBase64([]);
       clearTimeout(timeout.current);
       timeoutFunction();
+      setIsEdit(false);
+      setEditedId(null);
+      setRepliedMessageId(null);
+      setIsReply(false);
     }
   }
 
@@ -306,6 +331,11 @@ function Chat() {
       type: "delete_message",
       messageId,
     });
+  };
+
+  const replyMessage = (messageId: string) => {
+    setRepliedMessageId(messageId);
+    setIsReply(true);
   };
 
   const editMessage = (messageId: string) => {
@@ -322,10 +352,32 @@ function Chat() {
         id: Math.random() + Math.random(),
       }))
     );
-    // sendJsonMessage({
-    //   type: "edit",
-    //   messageId,
-    // });
+  };
+
+  const likeMessage = (messageId: string) => {
+    var message: MessageModel = messageHistory.find(
+      (el: any) => el.id === messageId
+    );
+    const messageLike = message.likes.find(
+      (el: MessageLike) => el.user === user?.username
+    );
+    if (messageLike) {
+      sendJsonMessage({
+        type: "delete_message_like",
+        messageId,
+        user: user?.username,
+      });
+    } else {
+      sendJsonMessage({
+        type: "create_message_like",
+        messageId,
+        user: user?.username,
+      });
+    }
+  };
+
+  const getMessageById = (messageId: string): MessageModel => {
+    return messageHistory.find((el: MessageModel) => el.id === messageId);
   };
 
   function convertFile(files: FileList | null) {
@@ -465,8 +517,12 @@ function Chat() {
         }
         style={{
           height:
-            filesBase64.length > 0
-              ? window.innerHeight - 310
+            filesBase64.length > 0 && isReply
+              ? window.innerHeight - 364
+              : filesBase64.length > 0
+              ? window.innerHeight - 312
+              : isReply
+              ? window.innerHeight - 302
               : window.innerHeight - 250,
         }}
       >
@@ -487,11 +543,81 @@ function Chat() {
                 message={message}
                 deleteMessage={deleteMessage}
                 editMessage={editMessage}
+                likeMessage={likeMessage}
+                getMessageById={getMessageById}
+                replyMessage={replyMessage}
               />
             ))}
           </InfiniteScroll>
         </div>
       </div>
+      {isReply && (
+        <div
+          className="replyBlock"
+          style={{
+            marginBottom: "10px",
+            border: "1px solid #B2B2B2",
+            borderRadius: "5px",
+          }}
+        >
+          <div
+            className="replyBlockInner"
+            style={{
+              display: "flex",
+              // gap: "10px",
+              alignItems: "center",
+              gap: "0px",
+              position: "relative",
+            }}
+          >
+            <BsFillReplyFill size={30} />
+            <TbMinusVertical size={40} />
+            {getMessageById(repliedMessageId!).content ? (
+              <div>
+                {getMessageById(repliedMessageId!)?.content.length > 80
+                  ? `${getMessageById(repliedMessageId!)?.content.slice(
+                      0,
+                      81
+                    )}...`
+                  : getMessageById(repliedMessageId!)?.content}
+              </div>
+            ) : (
+              <div
+                className="imagesBlock"
+                style={{ display: "flex", gap: "10px", alignItems: "center" }}
+              >
+                {getMessageById(repliedMessageId!)?.images.map((el: string) => (
+                  <div style={{ width: "30px", height: "30px" }}>
+                    <img
+                      style={{ height: "100%", width: "100%" }}
+                      className="pickedMessageImage"
+                      src={el}
+                      alt=""
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <span
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                cursor: "pointer",
+              }}
+            >
+              {" "}
+              <TiTimes
+                color="black"
+                onClick={() => {
+                  setIsReply(false);
+                  setRepliedMessageId(null);
+                }}
+              />
+            </span>
+          </div>
+        </div>
+      )}
       {filesBase64.length > 0 && (
         <div
           className="selectedImageBlock"

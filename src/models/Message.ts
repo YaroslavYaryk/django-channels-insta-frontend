@@ -1,4 +1,5 @@
 import { UserModel } from "./User";
+import { MessageLike } from "./MessageLike";
 
 export interface MessageModel {
   id: string;
@@ -8,5 +9,8 @@ export interface MessageModel {
   content: string;
   timestamp: string;
   read: boolean;
+  edited: boolean;
   images: string[];
+  likes: MessageLike[];
+  parent: string;
 }
