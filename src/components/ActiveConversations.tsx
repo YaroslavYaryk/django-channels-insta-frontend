@@ -63,7 +63,7 @@ export function ActiveConversations(props: Props) {
           case "unread_messages":
             var oldConversations = [...conversations];
             var index = oldConversations.findIndex(
-              (el) => (el.name = data.name)
+              (el) => el.name === data.name
             );
             var oldConversation = oldConversations[index];
             if (oldConversation) {
@@ -78,7 +78,7 @@ export function ActiveConversations(props: Props) {
           case "change_last_message":
             var oldConversations = [...conversations];
             var index = oldConversations.findIndex(
-              (el) => (el.name = data.name)
+              (el) => el.name === data.name
             );
             var oldConversation = oldConversations[index];
             if (oldConversation) {
@@ -90,7 +90,7 @@ export function ActiveConversations(props: Props) {
           case "new_unread_message":
             var oldConversations = [...conversations];
             var index = oldConversations.findIndex(
-              (el) => (el.name = data.name)
+              (el) => el.name === data.name
             );
             var oldConversation = oldConversations[index];
             if (oldConversation) {
@@ -103,7 +103,7 @@ export function ActiveConversations(props: Props) {
             }
             var oldMessages = [...unreadMessages];
             const convName = data.name;
-            var index = oldMessages.findIndex((el) => (el.name = convName));
+            var index = oldMessages.findIndex((el) => el.name === convName);
             if (index == -1) {
               var newElem = { name: convName, count: 1 };
               oldMessages.concat(newElem);

@@ -1,4 +1,11 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+  createRef,
+  LegacyRef,
+} from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { AuthContext } from "../contexts/AuthContext";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -15,6 +22,8 @@ import { FiImage } from "react-icons/fi";
 import { TiTimes } from "react-icons/ti";
 import { BsFillReplyFill } from "react-icons/bs";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
+
+import ForwardMessagePopup from "./UI/ForwardMessagePopup";
 
 import { BsEmojiSmile } from "react-icons/bs";
 
@@ -54,6 +63,13 @@ function Chat() {
 
   const [isEdit, setIsEdit] = useState(false);
   const [editedId, setEditedId] = useState<string | null>("");
+
+  const [isForwarded, setIsForwarded] = useState(false);
+  const [forwardConversationName, setForwardConversationName] = useState<
+    string | null
+  >(null);
+
+  const [param, setParam] = useState(false);
 
   const [page, setPage] = useState(2);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
@@ -147,7 +163,11 @@ function Chat() {
             break;
 
           case "last_30_messages":
-            setMessageHistory(data.messages);
+            var messages = data.messages;
+            for (var i = 0; i < messages.length; i++) {
+              messages[i].ref = createRef();
+            }
+            setMessageHistory(messages);
             setHasMoreMessages(data.has_more);
             break;
           case "chat_message_echo":
@@ -260,6 +280,26 @@ function Chat() {
     }
   }
 
+  const forwardMessage = (messageId: string) => {
+    var message: MessageModel = messageHistory.find(
+      (el: any) => el.id === messageId
+    );
+    setMessage(message.content);
+    setFilesBase64(
+      message.images.map((el) => ({
+        url: el,
+        id: Math.random() + Math.random(),
+      }))
+    );
+    setIsForwarded(!isForwarded);
+  };
+
+  const handleChooseUserToForward = (conversationName: string) => {
+    togglePopup();
+    setForwardConversationName(conversationName);
+    handleSubmit(conversationName);
+  };
+
   useEffect(() => () => clearTimeout(timeout.current), []);
 
   const connectionStatus = {
@@ -281,7 +321,7 @@ function Chat() {
   const inputReference: any = useHotkeys(
     "enter",
     () => {
-      handleSubmit();
+      handleSubmit("");
     },
     {
       enableOnTags: ["INPUT"],
@@ -298,7 +338,9 @@ function Chat() {
     onType();
   }
 
-  function handleSubmit() {
+  const elementsRef = useRef<HTMLDivElement>(null);
+
+  function handleSubmit(conversationName: string) {
     if (message.length > 0 || filesBase64.length > 0) {
       if (isEdit) {
         sendJsonMessage({
@@ -313,6 +355,8 @@ function Chat() {
           message,
           filesBase64: filesBase64,
           parent: repliedMessageId,
+          conversation_name: conversationName,
+          forwarded: isForwarded,
         });
       }
       setMessage("");
@@ -323,6 +367,10 @@ function Chat() {
       setEditedId(null);
       setRepliedMessageId(null);
       setIsReply(false);
+      setIsForwarded(false);
+      setForwardConversationName(null);
+      elementsRef.current?.scrollIntoView({ behavior: "smooth" });
+      // setParam(!param);
     }
   }
 
@@ -374,6 +422,10 @@ function Chat() {
         user: user?.username,
       });
     }
+  };
+
+  const togglePopup = () => {
+    setIsForwarded(!isForwarded);
   };
 
   const getMessageById = (messageId: string): MessageModel => {
@@ -431,6 +483,36 @@ function Chat() {
 
     inputReference.current.focus();
   };
+
+  const changeMessageViewOnScroll = (message: MessageModel, mode: boolean) => {
+    var oldMessages = [...messageHistory];
+    var index = oldMessages.findIndex((el) => el.id === message.id);
+    var oldMessage: MessageModel = oldMessages[index];
+    console.log(oldMessage, "old message");
+    oldMessage.scroll = mode;
+    oldMessages[index] = oldMessage;
+    setMessageHistory([...oldMessages]);
+  };
+
+  const scrollToElement = (messageId: string) => {
+    var message: MessageModel = messageHistory.find(
+      (el: any) => el.id === messageId
+    );
+    changeMessageViewOnScroll(message, true);
+    message.ref?.current?.scrollIntoView({ behavior: "smooth" });
+    clearTimeout(timeout.current);
+    timeout.current = setTimeout(
+      () => changeMessageViewOnScroll(message, false),
+      2000
+    );
+    // message.scroll = false;
+  };
+
+  // useEffect(() => {
+  //   // 👇️ scroll to bottom every time messages change
+  //   elementsRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   // elementsRef.current?.scrollTo(0, 0);
+  // }, [message]);
 
   return (
     <div style={{ height: window.innerHeight - 100 }}>
@@ -526,7 +608,7 @@ function Chat() {
               : window.innerHeight - 250,
         }}
       >
-        <div>
+        <div style={{}}>
           {/* Put the scroll bar always on the bottom */}
           <InfiniteScroll
             dataLength={messageHistory.length}
@@ -537,18 +619,26 @@ function Chat() {
             loader={<ChatLoader />}
             scrollableTarget="scrollableDiv"
           >
-            {messageHistory.map((message: MessageModel) => (
+            {messageHistory.map((message: MessageModel, index: number) => (
               <Message
-                key={message.id}
+                key={Math.random() + Math.random() + Math.random()}
                 message={message}
                 deleteMessage={deleteMessage}
                 editMessage={editMessage}
                 likeMessage={likeMessage}
                 getMessageById={getMessageById}
                 replyMessage={replyMessage}
+                forwardMessage={forwardMessage}
+                scrollToMessage={scrollToElement}
               />
             ))}
           </InfiniteScroll>
+          <div
+            style={{
+              marginBottom: "30px",
+            }}
+            ref={elementsRef}
+          ></div>
         </div>
       </div>
       {isReply && (
@@ -666,7 +756,10 @@ function Chat() {
         </div>
       )}
 
-      <div className="flex w-full items-center justify-between border border-gray-200 p-3">
+      <div
+        style={{}}
+        className="flex w-full items-center justify-between border border-gray-200 p-3"
+      >
         <div className="blockEmojiPick" style={{ position: "relative" }}>
           <BsEmojiSmile
             size={20}
@@ -732,12 +825,20 @@ function Chat() {
           <button
             className="ml-2 bg-gray-300 px-2 py-1"
             style={{ fontSize: "14px", borderRadius: "5px" }}
-            onClick={handleSubmit}
+            onClick={() => {
+              handleSubmit("");
+            }}
           >
             Submit
           </button>
         </div>
       </div>
+      {isForwarded && (
+        <ForwardMessagePopup
+          handleClose={togglePopup}
+          handleChoseUser={handleChooseUserToForward}
+        />
+      )}
     </div>
   );
 }

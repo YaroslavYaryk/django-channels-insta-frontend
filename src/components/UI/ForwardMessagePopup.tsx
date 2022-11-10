@@ -4,62 +4,55 @@ import { UserModelTable } from "../../models/UserModelTable";
 import { AuthContext } from "../../contexts/AuthContext";
 import { HOST, PORT } from "../../config/server";
 import { useNavigate } from "react-router-dom";
+import { ConversationModel } from "../../models/Conversation";
 
 type Props = {
   handleClose: () => void;
+  handleChoseUser: (conversationName: string) => void;
 };
 
-const ChooseConversationPopup = (props: Props) => {
+const ForwardMessagePopup = (props: Props) => {
   const { user } = useContext(AuthContext);
 
-  let navigate = useNavigate();
-
-  const [activeUsers, setActiveUsers] = useState<UserModelTable[]>([]);
+  const [conversations, setActiveConversations] = useState<ConversationModel[]>(
+    []
+  );
 
   useEffect(() => {
     async function fetchUsers() {
-      const res = await fetch(`${HOST}:${PORT}/users/api/all/`, {
-        headers: {
-          Authorization: `Token ${user?.token}`,
-        },
-      });
+      const res = await fetch(
+        "http://127.0.0.1:8000/chat/api/active_conversation/",
+        {
+          headers: {
+            Authorization: `Token ${user?.token}`,
+          },
+        }
+      );
       const data = await res.json();
-      setActiveUsers(data);
+      setActiveConversations(data);
     }
     fetchUsers();
   }, [user]);
-
-  function createConversationName(username: string) {
-    const namesAlph = [user?.username, username].sort();
-    return `${namesAlph[0]}__${namesAlph[1]}`;
-  }
 
   return (
     <div className="popup-box">
       <div className="box" style={{ width: window.innerWidth * 0.3 }}>
         <div className="header">
-          <p className="popHeaderTitle">New message</p>
+          <p className="popHeaderTitle">Forward to:</p>
           <span className="close-icon" onClick={props.handleClose}>
             <FaTimes />
           </span>
-        </div>
-        <div className="middlePart">
-          <p className="popHeaderTitle">To: </p>
-          <input className="searchInput" type="text" placeholder="Search" />
         </div>
         <div className="contentBlock">
           <div className="suggestedBlock">
             <p className="suggestedBlockText">Suggested</p>
           </div>
 
-          {activeUsers.map((us) => (
+          {conversations.map((conv) => (
             <div
-              key={us.id}
+              key={conv.name}
               className="profileBlock"
-              onClick={() => {
-                props.handleClose();
-                navigate(`/chats/${createConversationName(us.username)}`);
-              }}
+              onClick={() => props.handleChoseUser(conv.name)}
             >
               <div
                 className="profileElements"
@@ -69,9 +62,9 @@ const ChooseConversationPopup = (props: Props) => {
                   className="imageBlock"
                   style={{ height: "45px", width: "50px" }}
                 >
-                  {us.image ? (
+                  {conv.other_user.image ? (
                     <img
-                      src={us.image}
+                      src={conv.other_user.image}
                       alt="profile"
                       style={{ width: "100%", height: "100%" }}
                     />
@@ -83,7 +76,7 @@ const ChooseConversationPopup = (props: Props) => {
                     />
                   )}
                 </div>
-                <div className="usernameBlock">{us.username}</div>
+                <div className="usernameBlock">{conv.other_user.username}</div>
               </div>
             </div>
           ))}
@@ -93,4 +86,4 @@ const ChooseConversationPopup = (props: Props) => {
   );
 };
 
-export default ChooseConversationPopup;
+export default ForwardMessagePopup;

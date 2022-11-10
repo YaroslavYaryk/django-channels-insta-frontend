@@ -5,11 +5,11 @@ import { BiCheckDouble, BiCheck } from "react-icons/bi";
 import Modal from "react-modal";
 import Lightbox, { ImagesListType } from "react-spring-lightbox";
 import { formatMessageTimestamp } from "../services/TimeServices";
-import { BsThreeDotsVertical } from "react-icons/bs";
+import { BsThreeDotsVertical, BsReply } from "react-icons/bs";
 import { AiTwotoneHeart } from "react-icons/ai";
 import { MessageLike } from "../models/MessageLike";
 import { TbMinusVertical } from "react-icons/tb";
-import { spawn } from "child_process";
+import { RefObject } from "react";
 
 export function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
@@ -22,12 +22,16 @@ export function Message({
   likeMessage,
   getMessageById,
   replyMessage,
+  forwardMessage,
+  scrollToMessage,
 }: {
   message: MessageModel;
   deleteMessage: (id: string) => void;
   editMessage: (id: string) => void;
   likeMessage: (id: string) => void;
+  forwardMessage: (id: string) => void;
   replyMessage: (id: string) => void;
+  scrollToMessage: (id: string) => void;
   getMessageById: (id: string) => MessageModel;
 }) {
   const { user } = useContext(AuthContext);
@@ -47,7 +51,8 @@ export function Message({
       )}
     >
       <div
-        className={classNames("")}
+        className={classNames(``)}
+        ref={message.ref}
         onMouseEnter={() => {
           if (!messageOptionsOpen) {
             setHoverOpen(!hoverOpen);
@@ -59,9 +64,9 @@ export function Message({
           }
         }}
         style={{
-          paddingLeft: user!.username !== message.to_user.username ? "30px" : 0,
+          paddingLeft: user!.username !== message.to_user.username ? "40px" : 0,
           paddingRight:
-            user!.username === message.to_user.username ? "30px" : 0,
+            user!.username === message.to_user.username ? "40px" : 0,
           position: "relative",
         }}
         onDoubleClick={() => {
@@ -81,6 +86,9 @@ export function Message({
           >
             <div
               className="replyBlockInner"
+              onClick={() => {
+                scrollToMessage(message.parent);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -91,7 +99,8 @@ export function Message({
               }}
             >
               <TbMinusVertical size={40} />
-              {getMessageById(message.parent).content ? (
+              {getMessageById(message.parent) &&
+              getMessageById(message.parent).content ? (
                 <div>
                   {getMessageById(message.parent)?.content.length > 15
                     ? `${getMessageById(message.parent)?.content.slice(
@@ -124,19 +133,47 @@ export function Message({
           (user!.username !== message.to_user.username ? (
             <span
               className="imageDots"
-              style={{ position: "absolute", bottom: 0, left: 0 }}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                display: "flex",
+                alignItems: "center",
+              }}
             >
               <BsThreeDotsVertical
                 onClick={() => {
                   setMessageOptionsOpen(!messageOptionsOpen);
                 }}
               />
+              <BsReply
+                size={20}
+                onClick={() => {
+                  replyMessage(message.id);
+                  setHoverOpen(false);
+                  setMessageOptionsOpen(false);
+                }}
+              />
             </span>
           ) : (
             <span
               className="imageDots"
-              style={{ position: "absolute", bottom: 0, right: 0 }}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                display: "flex",
+                alignItems: "center",
+              }}
             >
+              <BsReply
+                size={20}
+                onClick={() => {
+                  replyMessage(message.id);
+                  setHoverOpen(false);
+                  setMessageOptionsOpen(false);
+                }}
+              />
               <BsThreeDotsVertical
                 onClick={() => {
                   setMessageOptionsOpen(!messageOptionsOpen);
@@ -169,23 +206,25 @@ export function Message({
                 <li
                   className="imageOption"
                   onClick={() => {
-                    replyMessage(message.id);
+                    forwardMessage(message.id);
                     setHoverOpen(false);
                     setMessageOptionsOpen(false);
                   }}
                 >
-                  Reply
+                  Forvard
                 </li>
-                <li
-                  className="imageOption"
-                  onClick={() => {
-                    editMessage(message.id);
-                    setHoverOpen(false);
-                    setMessageOptionsOpen(false);
-                  }}
-                >
-                  Edit
-                </li>
+                {!message.forwarded && (
+                  <li
+                    className="imageOption"
+                    onClick={() => {
+                      editMessage(message.id);
+                      setHoverOpen(false);
+                      setMessageOptionsOpen(false);
+                    }}
+                  >
+                    Edit
+                  </li>
+                )}
                 <li
                   onClick={() => {
                     deleteMessage(message.id);
@@ -219,10 +258,10 @@ export function Message({
                   borderBottomRightRadius: "10px",
                 }}
               >
-                <li className="imageOption">Reply</li>
+                <li className="imageOption">Forvard</li>
                 <li
                   onClick={() => {
-                    likeMessage(message.id);
+                    forwardMessage(message.id);
                     setHoverOpen(false);
                     setMessageOptionsOpen(false);
                   }}
@@ -236,15 +275,28 @@ export function Message({
 
         <div
           className=""
+          onClick={() => {}}
           style={{
             // border: "2px solid red",
             borderTopLeftRadius: "5px",
             borderTopRightRadius: "5px",
             borderBottomLeftRadius: "5px",
             maxWidth: "250px",
-            background: "#E8E8E8",
+            background: message.forwarded ? "#B9B9B9" : "#E8E8E8",
+            border: message.scroll ? "1px solid grey" : "",
           }}
         >
+          {message.forwarded && (
+            <div
+              style={{
+                fontSize: "10px",
+                marginLeft: "5px",
+                marginBottom: "-5px",
+              }}
+            >
+              Forwarded from {message.from_user.username}
+            </div>
+          )}
           {/* <div className="imageBlock"><div/> */}
           <div className="blockMessage">
             <div
@@ -281,7 +333,7 @@ export function Message({
             </div>
             <div
               className="block"
-              style={{ maxWidth: "220px", padding: "5px", minWidth: "100px" }}
+              style={{ maxWidth: "220px", padding: "5px", minWidth: "150px" }}
             >
               {message.content}
             </div>
@@ -313,13 +365,12 @@ export function Message({
               </div>
             )}
           </div>
-
           {message.likes.length > 0 && (
             <div
               style={{
                 position: "absolute",
                 bottom: -10,
-                left: user?.username !== message.from_user.username ? 0 : 30,
+                left: user?.username !== message.from_user.username ? 0 : 40,
               }}
             >
               <div style={{ display: "flex" }}>
