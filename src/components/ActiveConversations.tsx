@@ -15,7 +15,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { ConversationModel } from "../models/Conversation";
 import ChooseConversationPopup from "./UI/ChooseConversationPopup";
 import { UserModelTable } from "../models/UserModelTable";
-import { JUST_HOST, PORT } from "../config/server";
+import { HOST, JUST_HOST, PORT } from "../config/server";
 
 type Props = {
   conversName?: string;
@@ -114,6 +114,28 @@ export function ActiveConversations(props: Props) {
             }
             setUnreadMessages([...oldMessages]);
             break;
+          case "delete_last_unread":
+            if (data.from_user == user?.username) {
+              break;
+            }
+            var oldMessages = [...unreadMessages];
+            var conversationName = data.name;
+            var index = oldMessages.findIndex(
+              (el) => el.name === conversationName
+            );
+            if (index == -1) {
+              var newElem = { name: conversationName, count: 0 };
+              oldMessages.concat(newElem);
+            } else {
+              var oldElem = oldMessages[index];
+              if (oldElem.count > 0) {
+                oldElem.count -= 1;
+              }
+              oldMessages[index] = oldElem;
+            }
+            setUnreadMessages([...oldMessages]);
+
+            break;
           case "user_join":
             setActiveUsers((pcpts: string[]) => {
               if (!pcpts.includes(data.user)) {
@@ -148,19 +170,16 @@ export function ActiveConversations(props: Props) {
 
   useEffect(() => {
     async function fetchUsers() {
-      const res = await fetch(
-        "http://127.0.0.1:8000/chat/api/active_conversation/",
-        {
-          headers: {
-            Authorization: `Token ${user?.token}`,
-          },
-        }
-      );
+      const res = await fetch(`${HOST}:${PORT}/chat/api/active_conversation/`, {
+        headers: {
+          Authorization: `Token ${user?.token}`,
+        },
+      });
       const data = await res.json();
       setActiveConversations(data);
     }
     fetchUsers();
-  }, [user]);
+  }, []);
 
   function createConversationName(username: string) {
     const namesAlph = [user?.username, username].sort();

@@ -17,17 +17,15 @@ const ForwardMessagePopup = (props: Props) => {
   const [conversations, setActiveConversations] = useState<ConversationModel[]>(
     []
   );
+  console.log(conversations);
 
   useEffect(() => {
     async function fetchUsers() {
-      const res = await fetch(
-        "http://127.0.0.1:8000/chat/api/active_conversation/",
-        {
-          headers: {
-            Authorization: `Token ${user?.token}`,
-          },
-        }
-      );
+      const res = await fetch(`${HOST}:${PORT}/chat/api/active_conversation/`, {
+        headers: {
+          Authorization: `Token ${user?.token}`,
+        },
+      });
       const data = await res.json();
       setActiveConversations(data);
     }

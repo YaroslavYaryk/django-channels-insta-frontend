@@ -109,7 +109,8 @@ export function Message({
                       )}...`
                     : getMessageById(message.parent)?.content}
                 </div>
-              ) : (
+              ) : getMessageById(message.parent!) &&
+                getMessageById(message.parent!)?.images ? (
                 <div
                   className="imagesBlock"
                   style={{ display: "flex", gap: "10px", alignItems: "center" }}
@@ -125,6 +126,8 @@ export function Message({
                     </div>
                   ))}
                 </div>
+              ) : (
+                <div>Deleted Message</div>
               )}
             </div>
           </div>
@@ -211,7 +214,7 @@ export function Message({
                     setMessageOptionsOpen(false);
                   }}
                 >
-                  Forvard
+                  Forward
                 </li>
                 {!message.forwarded && (
                   <li
@@ -234,6 +237,16 @@ export function Message({
                   className="imageOption"
                 >
                   Delete
+                </li>
+                <li
+                  onClick={() => {
+                    likeMessage(message.id);
+                    setHoverOpen(false);
+                    setMessageOptionsOpen(false);
+                  }}
+                  className="imageOption"
+                >
+                  Like
                 </li>
               </ul>
             </div>
@@ -258,10 +271,19 @@ export function Message({
                   borderBottomRightRadius: "10px",
                 }}
               >
-                <li className="imageOption">Forvard</li>
                 <li
+                  className="imageOption"
                   onClick={() => {
                     forwardMessage(message.id);
+                    setHoverOpen(false);
+                    setMessageOptionsOpen(false);
+                  }}
+                >
+                  Forvard
+                </li>
+                <li
+                  onClick={() => {
+                    likeMessage(message.id);
                     setHoverOpen(false);
                     setMessageOptionsOpen(false);
                   }}

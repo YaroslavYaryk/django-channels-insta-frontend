@@ -27,7 +27,7 @@ import ForwardMessagePopup from "./UI/ForwardMessagePopup";
 
 import { BsEmojiSmile } from "react-icons/bs";
 
-import { JUST_HOST, PORT } from "../config/server";
+import { HOST, JUST_HOST, PORT } from "../config/server";
 
 import { formatMessageTimestamp } from "../services/TimeServices";
 
@@ -182,6 +182,7 @@ function Chat() {
             );
             break;
           case "user_join":
+            console.log(participants, "user_join", data.user);
             setParticipants((pcpts: string[]) => {
               if (!pcpts.includes(data.user)) {
                 return [...pcpts, data.user];
@@ -220,7 +221,7 @@ function Chat() {
 
   async function fetchMessages() {
     const apiRes = await fetch(
-      `http://127.0.0.1:8000/chat/api/messages/?conversation=${conversationName}&page=${page}`,
+      `${HOST}:${PORT}/chat/api/messages/?conversation=${conversationName}&page=${page}`,
       {
         method: "GET",
         headers: {
@@ -242,11 +243,12 @@ function Chat() {
       setMessageHistory((prev: MessageModel[]) => prev.concat(data.results));
     }
   }
+  console.log(page);
 
   useEffect(() => {
     async function fetchConversation() {
       const apiRes = await fetch(
-        `http://127.0.0.1:8000/chat/api/conversation/${conversationName}/`,
+        `${HOST}:${PORT}/chat/api/conversation/${conversationName}/`,
         {
           method: "GET",
           headers: {
@@ -633,12 +635,12 @@ function Chat() {
               />
             ))}
           </InfiniteScroll>
-          <div
+          {/* <div
             style={{
               marginBottom: "30px",
             }}
             ref={elementsRef}
-          ></div>
+          ></div> */}
         </div>
       </div>
       {isReply && (
